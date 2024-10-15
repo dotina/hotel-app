@@ -14,9 +14,11 @@ export class ReservationFormComponent implements OnInit {
   reservationForm: FormGroup = new FormGroup({});
 
   constructor(
-    private fb: FormBuilder,
-    private reservationService: ReservationService,
-    private router: Router) {
+    private readonly fb: FormBuilder,
+    private readonly reservationService: ReservationService,
+    private readonly router: Router,
+    private readonly activatedRoute: ActivatedRoute
+  ) {
 
   }
   ngOnInit(): void {
@@ -27,11 +29,28 @@ export class ReservationFormComponent implements OnInit {
       guestEmail: ['', [Validators.required, Validators.email]],
       roomNumber: ['', Validators.required]
     });
+    let id = this.activatedRoute.snapshot.paramMap.get('id');
+    if (id) {
+      let reservation = this.reservationService.getReservation(id);
+      if (reservation) {
+        this.reservationForm.patchValue(reservation); // this adds the values to the edit view form
+      }
+    }
   }
   onSubmit() {
     if(this.reservationForm.valid) {
-      this.reservationService.addReservation(this.reservationForm.value);
-      this.router.navigate(['/list']);
+      let reservation : Reservation = this.reservationForm.value;
+      let id = this.activatedRoute.snapshot.paramMap.get('id');
+
+      // to check if we are adding new or editing.
+      // this is because we are using the same submit button for both
+      if (id) {
+        // update
+        this.reservationService.updateReservation(id,reservation);
+      } else {
+        this.reservationService.addReservation(reservation);
+      }
+      this.router.navigate(['/list']).then(r => {});
     }
   }
 }
